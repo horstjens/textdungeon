@@ -9,11 +9,34 @@ file name should start with "dungeon"
 
 """
 
+
+    
+class Game():
+    """global variables"""
+    spoils_of_war_chance= 0.15 #chance of slain monster to drop item
+    parrychance= 0.33 # parrychance to block attack - longer weaponrange of defender
+    instakill = False  # set true for cheatmode!
+    
+    dungeon = [] 
+    monster_list = []
+    item_list = []
+    #hero = None
+    legend = ""
+    commands = ""
+
+    entchantment = {1:"magic",2:"rare",3:"epic",4:"legendary",5:"unique"}
+    slots = ("head","neck","body","hand","legs","feet")
+    zoo = {}
+    wearables = {}
+    meleeweapons = {}
+    items = {}
+    pots = {}
+
 import random
 import os
 import csv
 from lib import tools  # cls / pri_input
-#from lib import combat 
+from lib import combat 
 
 
 
@@ -549,27 +572,7 @@ class Rect():
         self.x2 = x + w
         self.y2 = y + h
         
-    
-class Game():
-    
-    spoils_of_war_chance= 0.15 #chance of slain monster to drop item
-    parrychance= 0.33 # parrychance to block attack - longer weaponrange of defender
-    instakill = False  # set true for cheatmode!
-    
-    dungeon = [] 
-    monster_list = []
-    item_list = []
-    #hero = None
-    legend = ""
-    commands = ""
 
-    entchantment = {1:"magic",2:"rare",3:"epic",4:"legendary",5:"unique"}
-    slots = ("head","neck","body","hand","legs","feet")
-    zoo = {}
-    wearables = {}
-    meleeweapons = {}
-    items = {}
-    pots = {}
 
 def getFrequency(csvdict, namerow, pricerow):
     dr = []
@@ -1346,8 +1349,8 @@ def main():
                     mymonster.dy=0
                 elif mymonster.x+mymonster.dx == Game.hero.x:
                     if mymonster.y+mymonster.dy == Game.hero.y:
-                        fight(mymonster,Game.hero)
-                        fight(Game.hero,mymonster)
+                        combat.fight(mymonster,Game.hero, Game.item_list, Game.parrychance)
+                        combat.fight(Game.hero,mymonster, Game.item_list, Game.parrychance)
                         input("press enter to continue")
                 else:
                     if (mymonster.x+mymonster.dx,mymonster.y+mymonster.dy) in occupied:
@@ -1371,8 +1374,8 @@ def main():
                     if mymonster.x == Game.hero.x+Game.hero.dx:
                         Game.hero.dx = 0
                         Game.hero.dy = 0
-                        fight(Game.hero,mymonster) #fight
-                        fight(mymonster,Game.hero)
+                        combat.fight(Game.hero,mymonster, Game.item_list, Game.parrychance) #fight
+                        combat.fight(mymonster,Game.hero, Game.item_list, Game.parrychance)
                         if mymonster.hp <1:
                             # monster down , drop?
                             # special drop

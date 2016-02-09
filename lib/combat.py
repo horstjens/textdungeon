@@ -3,8 +3,11 @@ import random
 
 
 
-def fight(i1,i2):
-    """fighting between two class instances i1 is attacking i2"""
+def fight(i1,i2, item_list, parrychance ):
+    """fighting between two Monster class instances i1,i2.
+       i1 is attacking i2
+       itemlist is read-only"""
+       
     if i1.hp <1 or i2.hp <1:
         return
     print("{} fights {}".format(i1.name,i2.name))
@@ -13,7 +16,7 @@ def fight(i1,i2):
     i2weapons = []
     i2armor = []
     #i1weapon equipped?
-    for item in Game.item_list:
+    for item in item_list:
         if item.carried_by == i1.number:
             if item.__class__.__name__ == "Meleeweapon":
                 if item.equiped:
@@ -61,7 +64,7 @@ def fight(i1,i2):
     print("{} rolls: {}, {} rolls: {} ".format(i1.name,i1_roll,i2.name,i2_roll))
     #------------------parry chance for defender-----------------
     if i2weaponrange > i1weaponrange:
-        if random.random()<Game.parrychance:
+        if random.random()< parrychance:
             print("defending {} succesfully parried with his longer weapon".format(i2.name))
             return
     #----- did i1hit i2 ? --------------
@@ -74,7 +77,7 @@ def fight(i1,i2):
         itemname = ""
         if i2.__class__.__name__ == "Hero":
             slot = random.choice(Game.slots)
-            for item in Game.item_list:
+            for item in item_list:
                 if item.__class__.__name__ == "Wearable":
                     if item.slot == slot and item.carried_by == Game.hero.number and item.worn:
                         #armorbonus = item.armorbonus
