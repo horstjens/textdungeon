@@ -36,7 +36,10 @@ import random
 import os
 import csv
 from lib import tools  # cls / pri_input
-from lib import combat 
+
+#from lib import combat 
+from lib import settings
+
 
 
 
@@ -310,17 +313,17 @@ class Monster(Dungeonobject):
 
         
         self.free_slots = 2
-        self.sigma=Game.zoo[self.symbol][8]
-        self.damage=Game.zoo[self.symbol][2]
+        self.sigma=Game.zoo[self.symbol][6]
+        #self.damage=Game.zoo[self.symbol][2]   # TODO unnötig > wird über stärke berechnet! (soll berechnet werden)
         self.attack_roll=Game.zoo[self.symbol][1]
-        self.attack1=Game.zoo[self.symbol][3]       
+        #self.attack1=Game.zoo[self.symbol][3]       
         self.dx=0
         self.dy=0
         self.jumprange = 1
-        self.hp=random.gauss(Game.zoo[self.symbol][4], self.sigma)
-        self.strength=random.gauss(Game.zoo[self.symbol][5], self.sigma)
-        self.dexterity=random.gauss(Game.zoo[self.symbol][6], self.sigma)
-        self.intelligence=random.gauss(Game.zoo[self.symbol][7], self.sigma)
+        self.hp=random.gauss(Game.zoo[self.symbol][2], self.sigma)
+        self.strength=random.gauss(Game.zoo[self.symbol][3], self.sigma)
+        self.dexterity=random.gauss(Game.zoo[self.symbol][4], self.sigma)
+        self.intelligence=random.gauss(Game.zoo[self.symbol][5], self.sigma)
         self.states ={"patrol": ["hunt","sleep","fight"],
                      "sleep": ["patrol"],
                      "hunt": ["fight","patrol"],
@@ -501,7 +504,7 @@ class Statue(Monster):
         self.dy = 0
     
     def init3(self):
-        self.equip_chance=Game.zoo[self.symbol][10]        
+        self.equip_chance=Game.zoo[self.symbol][8]        
 
 class Hero(Monster):
     
@@ -511,7 +514,7 @@ class Hero(Monster):
     def init3(self):
         self.history = []
         self.trophy = {}
-        self.equip_chance=Game.zoo[self.symbol][10]
+        self.equip_chance=Game.zoo[self.symbol][8]
         self.equip()
         self.hp=500
         self.hpmax=1000
@@ -523,19 +526,19 @@ class Hero(Monster):
 class Lord(Monster):
     
     def init3(self):
-        self.equip_chance=Game.zoo[self.symbol][10]
+        self.equip_chance=Game.zoo[self.symbol][8]
         self.equip()
             
 class Ogre(Monster):
     
     def init3(self):
-        self.equip_chance=Game.zoo[self.symbol][10]
+        self.equip_chance=Game.zoo[self.symbol][8]
         self.equip()
         
 class Mage(Monster):
         
     def init3(self):
-        self.equip_chance=Game.zoo[self.symbol][10]
+        self.equip_chance=Game.zoo[self.symbol][8]
         self.equip()
         self.jumprange = 4
         
@@ -545,34 +548,36 @@ class Ysera(Monster):
         self.dy = 0
     
     def init3(self):
-        self.equip_chance=Game.zoo[self.symbol][10]
+        self.equip_chance=Game.zoo[self.symbol][8]
         
 class Bonewarrior(Monster):
     
     def init3(self):
-        self.equip_chance=Game.zoo[self.symbol][10]
+        self.equip_chance=Game.zoo[self.symbol][8]
         self.equip()
         
         
 class Goblin(Monster):
     
     def init3(self):
-        self.equip_chance=Game.zoo[self.symbol][10]
+        self.equip_chance=Game.zoo[self.symbol][8]
         self.equip()
         self.jumprange = 2
             
         #items
         # class item/monster > code dupliziert "eltern klasse > object"
         
-class Rect():
-    """dungeon creator// a rectangle on the map used to charecterize a room"""
-    def __init__(self, x, y, w, h):
-        self.x1 = x
-        self.y1 = y
-        self.x2 = x + w
-        self.y2 = y + h
+
         
 
+    
+class Game():
+    dungeon = [] 
+    monster_list = []
+    item_list = []
+    #hero = None
+    legend = ""
+    commands = ""
 
 def getFrequency(csvdict, namerow, pricerow):
     dr = []
@@ -601,9 +606,9 @@ def fight(i1,i2):
     if i1.hp <1 or i2.hp <1:
         return
     print("{} fights {}".format(i1.name,i2.name))
-    i1weapons = []
+    i1weapons = []   # attacker
     i1armor = []
-    i2weapons = []
+    i2weapons = []   # defender
     i2armor = []
     #i1weapon equipped?
     for item in Game.item_list:
@@ -631,16 +636,8 @@ def fight(i1,i2):
     for w in i2weapons:
         if w.meleerange > i2weaponrange:
             i2weaponrange = w.meleerange
-            
-            
-    #all resistence set to 0
-    #random.choose slot to hit
-    #iterate over armor (defender)
-    #check if hit slot has armor(resistence)
-    
 
-        
-                     
+
     #---------------- p_feint (int + dex)/100
     finte = random.random() # 0-1
     i1_roll = random.randint(1,i1.attack_roll)
@@ -654,64 +651,79 @@ def fight(i1,i2):
     print("{} rolls: {}, {} rolls: {} ".format(i1.name,i1_roll,i2.name,i2_roll))
     #------------------parry chance for defender-----------------
     if i2weaponrange > i1weaponrange:
-        if random.random()<Game.parrychance:
+        if random.random()<settings.parrychance:
             print("defending {} succesfully parried with his longer weapon".format(i2.name))
             return
     #----- did i1hit i2 ? --------------
     # --------------------- i1 hit sucessfully -----------------------
     if i1_roll > i2_roll:
         d = random.random()#  0....1
-        # --- is the defender the hero ----
-        armorbonus = 0
-        armorvalue = 0
-        itemname = ""
-        if i2.__class__.__name__ == "Hero":
-            slot = random.choice(Game.slots)
-            for item in Game.item_list:
-                if item.__class__.__name__ == "Wearable":
-                    if item.slot == slot and item.carried_by == Game.hero.number and item.worn:
-                        #armorbonus = item.armorbonus
-                        #armorvalue = item.armor
-                        itemname = item.name
-                        break
-        damage = random.randint(1,i1.damage)
-        if i1.__class__.__name__ == "Hero" and Game.instakill: 
-            damage = 500
+        itemname = "unprotected"
+        slot = random.choice(Game.slots) # where does the attack hits the defender
+        for item in i2armor:
+            if item.slot == slot:
+                itemname = item.name
+                break
+        print("attack against {}".format(slot))
+        # ----- choose active weapon for dualwield -----
+        myweapon = random.choice(i1weapons)
+        raw_damage = i1.strength
+        # ----- critical damage -----
         if d < i1.strength/100:
             if d > i2.strength/100:
-                print("critical damage! (x3)")
-                damage *= 3
+                print("critical damage! (x{})".format(settings.crit_damage_bonus))
+                raw_damage *= settings.crit_damage_bonus
+        # ----- twohand bonus ------
+        if myweapon.twohand :
+            raw_damage *= settings.twohand_damagebonus # doubledamage for twohand weapon
+        # TODO doublestrike for dualwield
+        # --- damage malus because minimum requirements for weapon not fulfilled ----
+        if i1.strength < myweapon.min_str or i1.dexterity < myweapon.min_dex or i1.intelligence < myweapon.min_int :
+            print("{} does only {}% of damage because his weapon is too complicated for him".format(i1.name,(settings.damage_malus*100)))
+            raw_damage *= settings.damage_malus # lower damage cause of complicated weapon
+        # ---- choose damage type / some weapons can more than one attacktype ---
+        damagetype = []
+        if myweapon.pierce:
+            damagetype.append("pierce")
+        if myweapon.slice:
+            damagetype.append("slice")
+        if myweapon.crush:
+            damagetype.append("crush") 
+        damagetype = random.choice(damagetype)
+        damage_soak = 0
+        # ---- calculate protection ----
+        if itemname != "unprotected":
+            if damagetype == "pierce" and item.prot_pierce > 0:
+                damage_soak = item.prot_pierce
+            if damagetype == "slice" and item.prot_slice > 0:
+                damage_soak = item.prot_slice
+            if damagetype == "crush" and item.prot_crush > 0:
+                damage_soak = item.prot_crush
+        if raw_damage > damage_soak:
+            damage = raw_damage - damage_soak
+        # ----- cheat -----
+        if i1.__class__.__name__ == "Hero" and settings.instakill: 
+            raw_damage = 500
+       
         # ------------- damage greater armor? ----------
-        if damage > (armorvalue+armorbonus):
-            print("damage is reduced by {} points of {} ".format(armorvalue+armorbonus,itemname))
-            damage -= (armorvalue+armorbonus)
+        if damage > damage_soak:
+            print("{} damage of {:.0f} is reduced by {:.0f} points\nof {} ".format(damagetype,raw_damage,damage_soak,itemname))
         else:
             # ----- armor soaks up damage completely -------
-            print("the damage {} cannot penetrate the armor {} of {}".format(damage,armorvalue+armorbonus,itemname))
-            damage = 0
+            print("{} damage of {:.0f} is completely negated by {:.0f} points\nof {} ".format(damagetype,raw_damage,damage_soak,itemname))
         i2.hp -= damage
-        print("{} wins this round and makes {} damage".format(i1.name, damage))
-        print("{} has {} hp left".format(i2.name,int(i2.hp)))
+        print("{} wins this round and makes {:.0f} damage".format(i1.name, damage))
+        print("{} has {:.0f} hp left".format(i2.name,int(i2.hp)))
         if i2.hp < 1:
             print("{} lose, {} wins the fight".format(i2.name,i1.name))
-        #else:
-           # i1.dx=0
-           # i1.dy=0
-           # i2.dx=0
-           # i2.dy=0
+
     # --------------- i1 misses, i2 attacks instead------------
     elif i1_roll == i2_roll:
         print("its a draw - no damage taken")
-       # i1.dx=0
-       # i1.dy=0
-       # i2.dx=0
-       # i2.dy=0
+
     else:
         print("attack failed.. no damage")
-       # i1.dx=0
-       # i1.dy=0
-       # i2.dx=0
-       # i2.dy=0
+
     
 def main():
     
@@ -723,8 +735,6 @@ def main():
         for row in reader:
             Game.zoo[row["Symbol"]] = [row["Name"],
                                   int(row["Roll"]),
-                                  int(row["Damage"]),
-                                  row["Attack"],
                                   int(row["hp"]),
                                   int(row["Strength"]),
                                   int(row["Dexterity"]),
@@ -739,14 +749,14 @@ def main():
     for z in Game.zoo:
         if z == "@" or z == "R":
             continue
-        price = Game.zoo[z][9]
+        price = Game.zoo[z][7]
         if price > max_price:
             max_price = price
     price_sum=0    # --- calculate relative wearables dropchance
     for z in Game.zoo:
         if z == "@" or z == "R":
             continue
-        price = max_price*1.2-Game.zoo[z][9]
+        price = max_price*1.2-Game.zoo[z][7]
         price_sum += price
         Monster.drop[price_sum] = z
         Monster.prices.append(price_sum)
@@ -1392,7 +1402,7 @@ def main():
                                 droppings = True
                             for i in Game.item_list:
                                 if i.carried_by == mymonster.number:
-                                    if random.random() < Game.spoils_of_war_chance:
+                                    if random.random() < settings.spoils_of_war_chance:
                                         droppings = True
                                         print("spoils of war: ", i.name)
                                         i.carried_by = False
